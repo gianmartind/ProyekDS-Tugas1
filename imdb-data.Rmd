@@ -1,0 +1,36 @@
+---
+title: "IMDBData"
+author: "GMD"
+date: "3/8/2021"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+data <- read.csv("IMDB-Movie-Data.csv")
+data
+
+data %>%
+  group_by(Year, Genre) %>%
+  summarise(n())
+
+sum(is.na(data))
+
+data_rating <- data %>%
+  group_by(Director) %>%
+  summarise(mean = mean(Metascore), count = n(), rev = sum(Revenue..Millions.)) %>%
+  filter(count > mean(count)) %>%
+  arrange(desc(rev))
+
+data_rating
+
+ggplot(data_rating, aes(x = mean, y = rev))+
+  geom_point()
+
+data %>%
+  filter(Director == "Barry Jenkins")
+
+```
+
