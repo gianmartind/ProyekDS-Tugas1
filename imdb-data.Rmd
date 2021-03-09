@@ -5,13 +5,57 @@ date: "3/8/2021"
 output: html_document
 ---
 
+#Panggil library
 ```{r}
 library(ggplot2)
 library(dplyr)
+```
 
+##Import Dataset
+```{r}
 data <- read.csv("IMDB-Movie-Data.csv")
 data
+```
 
+##No. 1 Hitung jumlah film untuk masing-masing genre
+```{r}
+#Buat genre ke kolom baru (Genre1, Genre2, Genre3)
+i <- 1
+while (i <= nrow(data)) {
+  genres <- unlist(strsplit(data$Genre[i], ",", fixed = TRUE))
+  data$Genre1[i] <- genres[1]
+  data$Genre2[i] <- genres[2]
+  data$Genre3[i] <- genres[3]
+  i <- i + 1
+}
+
+#Buat vector berisi setiap jenis genre
+allGenre <- unique(c(data$Genre1, data$Genre2, data$Genre3))
+#Hapus nilai NA
+allGenre <- allGenre[!is.na(allGenre)]
+
+#Buat dataframe baru untuk menghitung jumlah kemunculan masing-masing genre
+genreCount <- data.frame(allGenre, rep(0, 20))
+#Beri nama untuk kolom
+colnames(genreCount) <- c("genre", "count")
+
+#Hitung kemunculan masing-masing genre, untuk setiap baris di data
+m <- 1
+while (m <= nrow(data)) {
+  n <- 1
+  while (n <= nrow(genreCount)) {
+    if(grepl(genreCount$genre[n], data$Genre[m], fixed = TRUE)){
+      genreCount$count[n] <- genreCount$count[n] + 1
+    }
+    n <- n + 1
+  }
+  m <- m + 1
+}
+
+genreCount
+```
+
+```{r}
 data %>%
   group_by(Year, Genre) %>%
   summarise(n())
@@ -28,9 +72,12 @@ data_rating
 
 ggplot(data_rating, aes(x = mean, y = rev))+
   geom_point()
+```
 
-data %>%
-  filter(Director == "Barry Jenkins")
 
+
+
+
+```{r}
 ```
 
