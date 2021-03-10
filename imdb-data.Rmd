@@ -9,6 +9,7 @@ output: html_document
 ```{r}
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 ```
 
 ##Import Dataset
@@ -17,7 +18,7 @@ data <- read.csv("IMDB-Movie-Data.csv")
 data
 ```
 
-##No. 1 Hitung jumlah film untuk masing-masing genre
+##Hitung jumlah film untuk masing-masing genre
 ```{r}
 #Buat genre ke kolom baru (Genre1, Genre2, Genre3)
 i <- 1
@@ -28,7 +29,7 @@ while (i <= nrow(data)) {
   data$Genre3[i] <- genres[3]
   i <- i + 1
 }
-
+data
 #Buat vector berisi setiap jenis genre
 allGenre <- unique(c(data$Genre1, data$Genre2, data$Genre3))
 #Hapus nilai NA
@@ -55,6 +56,78 @@ while (m <= nrow(data)) {
 genreCount
 ```
 
+##Jumlah Masing-masing genre per tahun
+```{r}
+dataGenre1 <- data.frame(data$Title, data$Year, data$Genre1, data$Director, data$Actors, data$Runtime..Minutes., data$Rating, data$Votes, data$Revenue..Millions., data$Metascore)
+colnames(dataGenre1) <- c("Title", "Year", "Genre", "Director", "Actors", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+dataGenre1
+
+dataGenre2 <- data.frame(data$Title, data$Year, data$Genre2, data$Director, data$Actors, data$Runtime..Minutes., data$Rating, data$Votes, data$Revenue..Millions., data$Metascore)
+colnames(dataGenre2) <- c("Title", "Year", "Genre", "Director", "Actors", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+dataGenre2 <- dataGenre2 %>% drop_na(Genre)
+dataGenre2
+
+dataGenre3 <- data.frame(data$Title, data$Year, data$Genre3, data$Director, data$Actors, data$Runtime..Minutes., data$Rating, data$Votes, data$Revenue..Millions., data$Metascore)
+colnames(dataGenre3) <- c("Title", "Year", "Genre", "Director", "Actors", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+dataGenre3 <- dataGenre3 %>% drop_na(Genre)
+dataGenre3
+
+dataGenre <- bind_rows(dataGenre1, dataGenre2, dataGenre3)
+dataGenreYear <- dataGenre %>%
+                  group_by(Year = as.character(Year), Genre) %>%
+                  summarise(Count = n())
+dataGenreYear
+dataGenre
+
+ggplot(dataGenreYear, aes(x = Year, y = Count, fill = Genre))+
+  geom_col(position = "stack")
+```
+
+##Dataframe akhir, gabungan dari genre dan aktor
+```{r}
+j <- 1
+while (j <= nrow(dataGenre)) {
+  actors <- unlist(strsplit(dataGenre$Actors[j], ",", fixed = TRUE))
+  dataGenre$Actor1[j] <- actors[1]
+  dataGenre$Actor2[j] <- actors[2]
+  dataGenre$Actor3[j] <- actors[3]
+  dataGenre$Actor4[j] <- actors[4]
+  j <- j + 1
+}
+
+dataGenreActor1 <- data.frame(dataGenre$Title, dataGenre$Year, dataGenre$Genre, dataGenre$Director, dataGenre$Actor1, dataGenre$Runtime, dataGenre$Rating, dataGenre$Votes, dataGenre$Revenue, dataGenre$Metascore)
+colnames(dataGenreActor1) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+
+dataGenreActor2 <- data.frame(dataGenre$Title, dataGenre$Year, dataGenre$Genre, dataGenre$Director, dataGenre$Actor2, dataGenre$Runtime, dataGenre$Rating, dataGenre$Votes, dataGenre$Revenue, dataGenre$Metascore)
+colnames(dataGenreActor2) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+
+dataGenreActor3 <- data.frame(dataGenre$Title, dataGenre$Year, dataGenre$Genre, dataGenre$Director, dataGenre$Actor3, dataGenre$Runtime, dataGenre$Rating, dataGenre$Votes, dataGenre$Revenue, dataGenre$Metascore)
+colnames(dataGenreActor3) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+
+dataGenreActor4 <- data.frame(dataGenre$Title, dataGenre$Year, dataGenre$Genre, dataGenre$Director, dataGenre$Actor4, dataGenre$Runtime, dataGenre$Rating, dataGenre$Votes, dataGenre$Revenue, dataGenre$Metascore)
+colnames(dataGenreActor4) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+dataGenreActor4 <- dataGenreActor4 %>% drop_na(Actor)
+
+dataGenreActor <- bind_rows(dataGenreActor1, dataGenreActor2, dataGenreActor3, dataGenreActor4)
+dataGenreActor %>%
+  filter(Title == "Guardians of the Galaxy")
+
+dataGenreActor %>%
+  group_by(Actor, Genre) %>%
+  summarise(Count = n())
+```
+```{r}
+dataMaxRev <- dataGenreActor %>%
+  group_by(Genre) %>%
+  summarise(Revenue = max(Revenue, na.rm = TRUE))
+
+dataMaxRev <- inner_join(dataMaxRev, dataGenreActor %>%
+                           select(Title, Revenue), by = "Revenue")
+
+unique(dataMaxRev)
+```
+
+
 ```{r}
 data %>%
   group_by(Year, Genre) %>%
@@ -75,9 +148,4 @@ ggplot(data_rating, aes(x = mean, y = rev))+
 ```
 
 
-
-
-
-```{r}
-```
 
