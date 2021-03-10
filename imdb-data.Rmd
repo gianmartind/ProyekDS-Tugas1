@@ -16,6 +16,7 @@ library(tidyr)
 ```{r}
 data <- read.csv("IMDB-Movie-Data.csv")
 data
+head(data)
 ```
 
 ##Hitung jumlah film untuk masing-masing genre
@@ -113,8 +114,8 @@ dataGenreActor %>%
   filter(Title == "Guardians of the Galaxy")
 
 dataGenreActor %>%
-  group_by(Actor, Genre) %>%
-  summarise(Count = n())
+  group_by(Actor) %>%
+  summarise(CountGenre = n_distinct(Genre))
 ```
 ```{r}
 dataMaxRev <- dataGenreActor %>%
