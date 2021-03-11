@@ -16,6 +16,8 @@ library(tidyr)
 ```{r}
 data <- read.csv("IMDB-Movie-Data.csv")
 data
+data %>%
+  filter(Title == "Cars 2")
 head(data)
 ```
 
@@ -75,12 +77,11 @@ dataGenre3
 
 dataGenre <- bind_rows(dataGenre1, dataGenre2, dataGenre3)
 dataGenreYear <- dataGenre %>%
-                  group_by(Year = as.character(Year), Genre) %>%
+                  group_by(Year, Genre) %>%
                   summarise(Count = n())
 dataGenreYear
-dataGenre
 
-ggplot(dataGenreYear, aes(x = Year, y = Count, fill = Genre))+
+ggplot(dataGenreYear, aes(x = as.factor(Year), y = Count, fill = Genre))+
   geom_col(position = "stack")
 ```
 
@@ -113,17 +114,26 @@ dataGenreActor <- bind_rows(dataGenreActor1, dataGenreActor2, dataGenreActor3, d
 dataGenreActor %>%
   filter(Title == "Guardians of the Galaxy")
 
-dataGenreActor %>%
-  group_by(Actor) %>%
-  summarise(CountGenre = n_distinct(Genre))
+actorGenreCount <- dataGenreActor %>%
+                    group_by(Actor) %>%
+                    summarise(CountGenre = n_distinct(Genre))
+
+actorGenreCount
+
+ggplot(actorGenreCount, aes(x = as.factor(CountGenre)))+
+  geom_bar()+
+  xlab("Jumlah genre yang dimainkan")+
+  ylab("Banyaknya aktor")
 ```
 ```{r}
-dataMaxRev <- dataGenreActor %>%
+dataMaxRev <- dataGenre %>%
   group_by(Genre) %>%
   summarise(Revenue = max(Revenue, na.rm = TRUE))
 
-dataMaxRev <- inner_join(dataMaxRev, dataGenreActor %>%
-                           select(Title, Revenue), by = "Revenue")
+dataMaxRev
+dataGenre
+dataMaxRev <- inner_join(dataMaxRev, dataGenre %>%
+                           select(Title, Revenue, Genre), by = c("Revenue", "Genre")) 
 
 unique(dataMaxRev)
 ```
@@ -146,6 +156,37 @@ data_rating
 
 ggplot(data_rating, aes(x = mean, y = rev))+
   geom_point()
+```
+```{r}
+data2 <- read.csv("IMDB-Movie-Data.csv")
+dataMetaRev <- data2 %>% 
+                group_by(Director) %>%
+                summarise(meta = mean(Metascore), rev = mean(Revenue..Millions.)) %>%
+                drop_na(rev) %>%
+                arrange(desc(meta))
+
+dataMetaRevHigh <- dataMetaRev[1:100,]
+dataMetaRevHigh
+
+mean(dataMetaRev$rev)
+mean(dataMetaRevHigh$rev)
+
+boxplot(dataMetaRev$rev, dataMetaRevHigh$rev, names = c("Semua", "Metascore tinggi"))
+
+ggplot(data2, aes(x = Rating, y = Metascore))+
+  geom_point()
+
+metaRatingDiff <- vector(mode = "double", length = nrow(data2))
+metaRatingDiff <- metaRatingDiff[!is.na(metaRatingDiff)]
+
+i <- 1
+while(i <= nrow(data2)){
+  metaRatingDiff[i] <- abs((data2$Metascore[i]/10) - data2$Rating[i])
+  i <- i + 1
+}
+
+hist(metaRatingDiff, main = "Histogram perbedaan antara Rating (user) dan Metascore", xlab = "Diff")
+
 ```
 
 
