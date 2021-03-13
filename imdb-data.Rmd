@@ -81,6 +81,9 @@ dataGenreYear <- dataGenre %>%
                   summarise(Count = n())
 dataGenreYear
 
+dataGenre %>% 
+  filter(Title == "Guardians of the Galaxy")
+
 ggplot(dataGenreYear, aes(x = as.factor(Year), y = Count, fill = Genre))+
   geom_col(position = "stack")
 ```
@@ -114,9 +117,21 @@ dataGenreActor <- bind_rows(dataGenreActor1, dataGenreActor2, dataGenreActor3, d
 dataGenreActor %>%
   filter(Title == "Guardians of the Galaxy")
 
-actorGenreCount <- dataGenreActor %>%
+filmGenreCount <- dataGenreActor %>%
+                    group_by(Title) %>%
+                    summarise(Count = n_distinct(Genre))
+filmGenreCount
+
+mean(filmGenreCount$Count)
+
+actorFilmCount <- dataGenreActor %>%
                     group_by(Actor) %>%
-                    summarise(CountGenre = n_distinct(Genre))
+                    summarise(CountFilm = n_distinct(Title))
+
+actorGenreCount <- inner_join(dataGenreActor, actorFilmCount %>%
+                                filter(CountFilm > 1), by = "Actor") %>%
+                    group_by(Actor) %>%
+                    summarise(CountGenre = n_distinct(Genre), CountFilm = n_distinct(Title))
 
 actorGenreCount
 
@@ -124,7 +139,25 @@ ggplot(actorGenreCount, aes(x = as.factor(CountGenre)))+
   geom_bar()+
   xlab("Jumlah genre yang dimainkan")+
   ylab("Banyaknya aktor")
+
+mean(actorGenreCount$CountGenre)
+
+ggplot(actorGenreCount, aes(x = as.factor(CountFilm)))+
+  geom_bar()+
+  xlab("Jumlah film yang dimainkan")+
+  ylab("Banyaknya aktor")
+
+mean(actorGenreCount$CountFilm)
+
+temp <- actorGenreCount$CountGenre/actorGenreCount$CountFilm
+temp[temp > 2 & temp < 2.5]
+
+actorGenreCount %>%
+  arrange(desc(CountGenre/CountFilm))
+
+hist(temp, main = "Jumlah Genre / Jumlah Film tiap Aktor", xlab = "CountGenre/CountActor")
 ```
+
 ```{r}
 dataMaxRev <- dataGenre %>%
   group_by(Genre) %>%
@@ -165,6 +198,8 @@ dataMetaRev <- data2 %>%
                 drop_na(rev) %>%
                 arrange(desc(meta))
 
+dataMetaRev
+
 dataMetaRevHigh <- dataMetaRev[1:100,]
 dataMetaRevHigh
 
@@ -172,12 +207,16 @@ mean(dataMetaRev$rev)
 mean(dataMetaRevHigh$rev)
 
 boxplot(dataMetaRev$rev, dataMetaRevHigh$rev, names = c("Semua", "Metascore tinggi"))
+```
 
+```{r}
 ggplot(data2, aes(x = Rating, y = Metascore))+
-  geom_point()
+  geom_point()+
+  geom_smooth()
 
 metaRatingDiff <- vector(mode = "double", length = nrow(data2))
 metaRatingDiff <- metaRatingDiff[!is.na(metaRatingDiff)]
+
 
 i <- 1
 while(i <= nrow(data2)){
@@ -187,7 +226,101 @@ while(i <= nrow(data2)){
 
 hist(metaRatingDiff, main = "Histogram perbedaan antara Rating (user) dan Metascore", xlab = "Diff")
 
+data2$MetaRatingDiff <- metaRatingDiff
+
+data2 %>%
+  filter(MetaRatingDiff > 3.5) %>%
+  select(Rank, Title, MetaRatingDiff)
 ```
+
+
+```{r}
+j <- 1
+while (j <= nrow(data)) {
+  actors <- unlist(strsplit(data$Actors[j], ",", fixed = TRUE))
+  data$Actor1[j] <- actors[1]
+  data$Actor2[j] <- actors[2]
+  data$Actor3[j] <- actors[3]
+  data$Actor4[j] <- actors[4]
+  j <- j + 1
+}
+
+dataActor1 <- data.frame(data$Title, data$Year, data$Genre, data$Director, data$Actor1, data$Runtime, data$Rating, data$Votes, data$Revenue, data$Metascore)
+colnames(dataActor1) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+
+dataActor2 <- data.frame(data$Title, data$Year, data$Genre, data$Director, data$Actor2, data$Runtime, data$Rating, data$Votes, data$Revenue, data$Metascore)
+colnames(dataActor2) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+
+dataActor3 <- data.frame(data$Title, data$Year, data$Genre, data$Director, data$Actor3, data$Runtime, data$Rating, data$Votes, data$Revenue, data$Metascore)
+colnames(dataActor3) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+
+dataActor4 <- data.frame(data$Title, data$Year, data$Genre, data$Director, data$Actor4, data$Runtime, data$Rating, data$Votes, data$Revenue, data$Metascore)
+colnames(dataActor4) <- c("Title", "Year", "Genre", "Director", "Actor", "Runtime", "Rating", "Votes", "Revenue", "Metascore")
+dataActor4 <- dataActor4 %>% drop_na(Actor)
+
+dataActor <- bind_rows(dataActor1, dataActor2, dataActor3, dataActor4)
+
+dataActor %>%
+  group_by(Director) %>%
+  summarise(Count = n_distinct(Title)) %>%
+  filter(Count > 1)
+
+dataActorDir <- inner_join(dataActor, dataActor %>%
+                                      group_by(Director) %>%
+                                      summarise(Count = n_distinct(Title)) %>%
+                                      filter(Count > 1), by = "Director")
+                
+dataActorDir %>%
+  filter(Director == "James Gunn")
+
+dataActorDir <- dataActorDir %>%
+                  group_by(Director, Actor) %>%
+                  summarise(Count = n_distinct(Title)) %>%
+                  arrange(desc(Count))
+
+dataActorDir
+
+ggplot(dataActorDir, aes(x = as.factor(Count)))+
+  geom_bar()+
+  xlab("Berapa kali bekerja bersama")+
+  ylab("Jumlah")+
+  ggtitle("Banyaknya aktor dan director yang bekerja bersama")
+
+dataActor %>%
+  filter(Director == "David Yates")
+```
+```{r}
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+
+remove_outliers(data$Revenue..Millions.)
+remove_outliers(data$Votes)
+
+length(data$Votes[!data$Votes %in% boxplot.stats(data$Votes)$out])
+length(data$Revenue..Millions.[!data$Revenue..Millions. %in% boxplot.stats(data$Revenue..Millions.)$out])
+
+boxplot(data$Votes, main = "Boxplot Votes")
+boxplot(data$Revenue..Millions., main = "Boxplot Revenue")
+
+ggplot(data, aes(x = remove_outliers(Revenue..Millions.), y = remove_outliers(Votes)))+
+  geom_point()+
+  geom_smooth()+
+  xlab("Revenue")+
+  ylab("Votes")
+
+data %>%
+  select(Revenue..Millions., Votes) %>%
+  arrange(Revenue..Millions.)
+
+data
+```
+
 
 
 
