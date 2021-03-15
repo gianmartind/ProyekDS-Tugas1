@@ -153,6 +153,9 @@ temp <- actorGenreCount$CountGenre/actorGenreCount$CountFilm
 temp[temp > 2 & temp < 2.5]
 
 actorGenreCount %>%
+  arrange(desc(CountGenre))
+
+actorGenreCount %>%
   arrange(desc(CountGenre/CountFilm))
 
 hist(temp, main = "Jumlah Genre / Jumlah Film tiap Aktor", xlab = "CountGenre/CountActor")
@@ -168,7 +171,8 @@ dataGenre
 dataMaxRev <- inner_join(dataMaxRev, dataGenre %>%
                            select(Title, Revenue, Genre), by = c("Revenue", "Genre")) 
 
-unique(dataMaxRev)
+unique(dataMaxRev) %>%
+  arrange(desc(Revenue))
 ```
 
 
