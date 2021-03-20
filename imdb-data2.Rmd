@@ -1,0 +1,21 @@
+---
+title: "imdb-data2"
+author: "GMD"
+date: "3/20/2021"
+output: html_document
+---
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+```{r import data}
+data <- read.csv("IMDB-Movie-Data.csv")
+data
+```
+
+```{r}
+
+```
+

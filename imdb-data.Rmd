@@ -84,8 +84,8 @@ dataGenreYear
 dataGenre %>% 
   filter(Title == "Guardians of the Galaxy")
 
-ggplot(dataGenreYear, aes(x = as.factor(Year), y = Count, fill = Genre))+
-  geom_col(position = "stack")
+ggplot(dataGenreYear, aes(x = as.factor(Year), y = Count, group = Genre, color = Genre))+
+  geom_line()
 ```
 
 ##Dataframe akhir, gabungan dari genre dan aktor
@@ -114,8 +114,9 @@ colnames(dataGenreActor4) <- c("Title", "Year", "Genre", "Director", "Actor", "R
 dataGenreActor4 <- dataGenreActor4 %>% drop_na(Actor)
 
 dataGenreActor <- bind_rows(dataGenreActor1, dataGenreActor2, dataGenreActor3, dataGenreActor4)
+
 dataGenreActor %>%
-  filter(Title == "Guardians of the Galaxy")
+  filter(Actor == "Hugh Jackman")
 
 filmGenreCount <- dataGenreActor %>%
                     group_by(Title) %>%
@@ -153,12 +154,12 @@ temp <- actorGenreCount$CountGenre/actorGenreCount$CountFilm
 temp[temp > 2 & temp < 2.5]
 
 actorGenreCount %>%
-  arrange(desc(CountGenre))
-
-actorGenreCount %>%
   arrange(desc(CountGenre/CountFilm))
 
 hist(temp, main = "Jumlah Genre / Jumlah Film tiap Aktor", xlab = "CountGenre/CountActor")
+
+actorGenreCount %>%
+  filter(Actor == "Hugh Jackman")
 ```
 
 ```{r}
@@ -171,8 +172,7 @@ dataGenre
 dataMaxRev <- inner_join(dataMaxRev, dataGenre %>%
                            select(Title, Revenue, Genre), by = c("Revenue", "Genre")) 
 
-unique(dataMaxRev) %>%
-  arrange(desc(Revenue))
+unique(dataMaxRev)
 ```
 
 
@@ -202,7 +202,9 @@ dataMetaRev <- data2 %>%
                 drop_na(rev) %>%
                 arrange(desc(meta))
 
-dataMetaRev
+dataMetaRev %>%
+  arrange(rev) %>%
+  drop_na(meta)
 
 dataMetaRevHigh <- dataMetaRev[1:100,]
 dataMetaRevHigh
